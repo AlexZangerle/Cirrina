@@ -1,26 +1,11 @@
 package at.ac.uibk.dps.cirrina.execution.object.statemachine;
 
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.COUNTER_EVENTS_HANDLED;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.COUNTER_EVENTS_RECEIVED;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.COUNTER_INVOCATIONS;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.COUNTER_STATE_MACHINE_INSTANCES;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.GAUGE_ACTION_DATA_LATENCY;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.GAUGE_ACTION_INVOKE_LATENCY;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.GAUGE_ACTION_RAISE_LATENCY;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.GAUGE_EVENT_RESPONSE_TIME_EXCLUSIVE;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.GAUGE_EVENT_RESPONSE_TIME_INCLUSIVE;
-
 import at.ac.uibk.dps.cirrina.cirrina.Runtime;
 import at.ac.uibk.dps.cirrina.classes.state.StateClass;
 import at.ac.uibk.dps.cirrina.classes.statemachine.StateMachineClass;
 import at.ac.uibk.dps.cirrina.classes.transition.TransitionClass;
 import at.ac.uibk.dps.cirrina.csm.Csml.EventChannel;
-import at.ac.uibk.dps.cirrina.execution.command.ActionCommand;
-import at.ac.uibk.dps.cirrina.execution.command.ActionRaiseCommand;
-import at.ac.uibk.dps.cirrina.execution.command.ActionTimeoutResetCommand;
-import at.ac.uibk.dps.cirrina.execution.command.CommandFactory;
-import at.ac.uibk.dps.cirrina.execution.command.ExecutionContext;
-import at.ac.uibk.dps.cirrina.execution.command.Scope;
+import at.ac.uibk.dps.cirrina.execution.command.*;
 import at.ac.uibk.dps.cirrina.execution.object.action.TimeoutAction;
 import at.ac.uibk.dps.cirrina.execution.object.context.Context;
 import at.ac.uibk.dps.cirrina.execution.object.context.ContextBuilder;
@@ -39,15 +24,14 @@ import com.google.common.flogger.FluentLogger;
 import io.opentelemetry.api.OpenTelemetry;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.*;
 
 public final class StateMachine implements Runnable, EventListener, Scope {
 
@@ -845,6 +829,13 @@ public final class StateMachine implements Runnable, EventListener, Scope {
   public StateMachineClass getStateMachineClass() {
     return stateMachineClass;
   }
+
+  /**
+   * Returns the active State
+   *
+   * @return State object.
+   */
+  public State getActiveState() { return activeState;}
 
   /**
    * Sets the collection of nested state machine instance IDs.

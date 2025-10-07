@@ -61,7 +61,7 @@ dependencies {
 
   implementation("com.google.guava:guava:33.0.0-jre")
 
-  implementation("com.google.protobuf:protobuf-java:4.32.0")
+  implementation("com.google.protobuf:protobuf-java:4.32.1")
 
   implementation("io.etcd:jetcd-core:0.8.5")
 
@@ -91,7 +91,7 @@ dependencies {
 
   implementation("org.jgrapht:jgrapht-core:1.5.2")
 
-  implementation("org.pkl-lang:pkl-config-java:0.29.0")
+  implementation("org.pkl-lang:pkl-config-java:0.29.0") // Get the container and its dimensions
   implementation("org.pkl-lang:pkl-codegen-java:0.29.0")
 
   testImplementation(platform("org.junit:junit-bom:5.9.1"))
@@ -103,6 +103,10 @@ dependencies {
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
 
   implementation(kotlin("stdlib-jdk8"))
+
+  implementation("io.javalin:javalin:6.7.0")
+
+  implementation("org.slf4j:slf4j-simple:2.0.12")
 }
 
 repositories {

@@ -88,8 +88,13 @@ class Runtime(
     stateMachines.firstOrNull { it.stateMachineInstanceId == stateMachineId }
 
   /** Run all state machines (blocking). */
-  fun run() = runBlocking {
-    stateMachines.map { instance -> async(Dispatchers.Default) { instance.run() } }.awaitAll()
+  fun run() {
+    if (System.getenv("CIRRINA_UI_ENABLED").equals("true", ignoreCase = true)) {
+      VisualizationServer(this@Runtime).start()
+    }
+    runBlocking {
+      stateMachines.map { instance -> async(Dispatchers.Default) { instance.run() } }.awaitAll()
+    }
   }
 
   // Recursively builds all state machine instances and returns them in a flat list.
