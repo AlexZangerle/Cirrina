@@ -67,6 +67,19 @@ public class Extent {
     return extent.getLast();
   }
 
+  public List<ContextVariable> getAll() throws IOException {
+    final var allVariables = new java.util.HashMap<String, ContextVariable>();
+
+    for (final var context : this.extent) {
+      // This assumes the Context class has a getAll() that returns List<ContextVariable>
+      for (final var variable : context.getAll()) {
+        allVariables.put(variable.name(), variable);
+      }
+    }
+
+    return new ArrayList<>(allVariables.values());
+  }
+
   public Optional<Object> resolve(String name) {
     return extent
       .reversed()
