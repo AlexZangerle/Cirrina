@@ -12,7 +12,9 @@ import at.ac.uibk.dps.cirrina.utils.Id
 import com.google.common.flogger.FluentLogger
 import io.opentelemetry.api.OpenTelemetry
 import java.net.URI
-import kotlinx.coroutines.Dispatchers
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.Executors
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
@@ -42,6 +44,8 @@ class Runtime(
 
   /** Top-level extent. */
   val extent = Extent(persistentContext)
+
+  val invocationListeners = CopyOnWriteArrayList<InvocationListener>()
 
   init {
     val collaborativeStateMachineClass =
@@ -92,8 +96,18 @@ class Runtime(
     if (System.getenv("CIRRINA_UI_ENABLED").equals("true", ignoreCase = true)) {
       VisualizationServer(this@Runtime).start()
     }
+
     runBlocking {
-      stateMachines.map { instance -> async(Dispatchers.Default) { instance.run() } }.awaitAll()
+      stateMachines
+        .map { instance ->
+          async(
+            Executors.newFixedThreadPool(System.getenv("CIRRINA_THREAD_COUNT")?.toIntOrNull() ?: 8)
+              .asCoroutineDispatcher()
+          ) {
+            instance.run()
+          }
+        }
+        .awaitAll()
     }
   }
 
@@ -117,5 +131,15 @@ class Runtime(
 
     instance.setNestedStateMachineIds(nestedInstances.map { it.stateMachineInstanceId })
     return listOf(instance) + nestedInstances
+  }
+
+  /** Allows other components to register themselves to receive service invocation events. */
+  fun addInvocationListener(listener: InvocationListener) {
+    invocationListeners.add(listener)
+  }
+
+  /** Fires an event to all registered listeners. This will be called by ActionInvokeCommand. */
+  fun fireServiceInvoked(sm: StateMachine, serviceType: String) {
+    invocationListeners.forEach { it.onServiceInvoked(sm, serviceType) }
   }
 }

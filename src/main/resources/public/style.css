@@ -61,3 +61,15 @@ h1 {
     white-space: pre;
     transition: opacity 0.2s;
 }
+
+.hull {
+    fill-opacity: 0.15;
+    stroke: #666;
+    stroke-width: 1px;
+    stroke-linejoin: round;
+}
+
+.legend-title {
+    font-weight: bold;
+    font-size: 14px;
+}

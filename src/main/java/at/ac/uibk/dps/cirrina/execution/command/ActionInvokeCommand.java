@@ -1,9 +1,5 @@
 package at.ac.uibk.dps.cirrina.execution.command;
 
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.COUNTER_INVOCATIONS;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.GAUGE_ACTION_INVOKE_LATENCY;
-import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.GAUGE_EVENT_RESPONSE_TIME_INCLUSIVE;
-
 import at.ac.uibk.dps.cirrina.csm.Csml.EventChannel;
 import at.ac.uibk.dps.cirrina.execution.object.action.InvokeAction;
 import at.ac.uibk.dps.cirrina.execution.object.context.ContextVariable;
@@ -13,9 +9,12 @@ import at.ac.uibk.dps.cirrina.execution.object.statemachine.StateMachineEventHan
 import at.ac.uibk.dps.cirrina.execution.service.ServiceImplementation;
 import at.ac.uibk.dps.cirrina.utils.Time;
 import com.google.common.flogger.FluentLogger;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static at.ac.uibk.dps.cirrina.tracing.SemanticConvention.*;
 
 /**
  * Action invoke command, performs a service type invocation.
@@ -58,6 +57,10 @@ public final class ActionInvokeCommand extends ActionCommand {
 
       List<ContextVariable> input = prepareInput(extent);
 
+      final var stateMachineInstance = executionContext.scope().getStateMachine();
+      final var runtime = stateMachineInstance.getRuntime();
+      runtime.fireServiceInvoked(stateMachineInstance, invokeAction.getServiceType());
+      
       // Invoke (asynchronously)
       serviceImplementation
         .invoke(input, executionContext.scope().getId())

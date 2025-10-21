@@ -822,6 +822,15 @@ public final class StateMachine implements Runnable, EventListener, Scope {
   }
 
   @Override
+  public StateMachine getStateMachine() {
+    return this;
+  }
+
+  public Runtime getRuntime() {
+    return this.runtime;
+  }
+  
+  @Override
   public String toString() {
     return new ToStringBuilder(this)
       .append("id", stateMachineId)
@@ -855,4 +864,10 @@ public final class StateMachine implements Runnable, EventListener, Scope {
   public void setNestedStateMachineIds(List<Id> nestedStateMachineIds) {
     this.nestedStateMachineIds = nestedStateMachineIds;
   }
+
+  public StateMachine getParentStateMachine(){
+    return parentStateMachine;
+  }
+
+  public List<Id> getNestedStateMachineIds() { return nestedStateMachineIds; }
 }
