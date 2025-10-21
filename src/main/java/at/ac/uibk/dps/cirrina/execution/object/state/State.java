@@ -9,9 +9,10 @@ import at.ac.uibk.dps.cirrina.execution.object.context.Context;
 import at.ac.uibk.dps.cirrina.execution.object.context.Extent;
 import at.ac.uibk.dps.cirrina.execution.object.context.InMemoryContext;
 import at.ac.uibk.dps.cirrina.execution.object.statemachine.StateMachine;
+import org.jgrapht.traverse.TopologicalOrderIterator;
+
 import java.util.ArrayList;
 import java.util.List;
-import org.jgrapht.traverse.TopologicalOrderIterator;
 
 public final class State implements Scope {
 
@@ -34,6 +35,11 @@ public final class State implements Scope {
   @Override
   public String getId() {
     return parent.getId();
+  }
+
+  @Override
+  public StateMachine getStateMachine() {
+    return this.parent;
   }
 
   public StateClass getStateObject() {

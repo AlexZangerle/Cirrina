@@ -9,12 +9,13 @@ import at.ac.uibk.dps.cirrina.execution.object.event.Event;
 import at.ac.uibk.dps.cirrina.io.plantuml.Exportable;
 import at.ac.uibk.dps.cirrina.io.plantuml.PlantUmlVisitor;
 import jakarta.annotation.Nullable;
+import org.jgrapht.graph.DirectedPseudograph;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
-import org.jgrapht.graph.DirectedPseudograph;
 
 /**
  * State machine class, represents the structure of a state machine.
@@ -117,6 +118,22 @@ public final class StateMachineClass
       .map(OnTransitionClass.class::cast)
       .filter(transition -> transition.getEventName().equals(eventName))
       .toList();
+  }
+
+  /**
+   * Returns the transitions from a state.
+   *
+   * @param fromStateClass From state.
+   * @return The list of on-transitions.
+   */
+  public List<OnTransitionClass> findOnTransitionsFromState(
+          StateClass fromStateClass
+  ) {
+    return outgoingEdgesOf(fromStateClass)
+            .stream()
+            .filter(OnTransitionClass.class::isInstance)
+            .map(OnTransitionClass.class::cast)
+            .toList();
   }
 
   /**
