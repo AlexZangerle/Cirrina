@@ -6,12 +6,14 @@
     <link href="style.css" rel="stylesheet">
 </head>
 <body>
-<h1>Cirrina Live State Machine Graph</h1>
 <div id="graph-container"></div>
 <div class="tooltip" id="tooltip"></div>
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
-<script src="/dist/main.js" type="module"></script>
+<script type="module">
+  import GraphVisualizer from './main.ts';
+  const graph = new GraphVisualizer('graph-container');
+</script>
 
 </body>
 </html>
