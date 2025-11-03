@@ -133,12 +133,12 @@ class Runtime(
     return listOf(instance) + nestedInstances
   }
 
-  /** Allows other components to register themselves to receive service invocation events. */
+  /** Allow other components to register themselves to receive service invocation events. */
   fun addInvocationListener(listener: InvocationListener) {
     invocationListeners.add(listener)
   }
 
-  /** Fires an event to all registered listeners. This will be called by ActionInvokeCommand. */
+  /** Fire an event to all registered listeners. This will be called by ActionInvokeCommand. */
   fun fireServiceInvoked(sm: StateMachine, serviceType: String) {
     invocationListeners.forEach { it.onServiceInvoked(sm, serviceType) }
   }

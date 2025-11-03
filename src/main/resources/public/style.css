@@ -13,10 +13,8 @@ h1 {
 }
 
 #graph-container {
-    width: 95vw;
-    height: 85vh;
-    border: 1px solid #ddd;
-    border-radius: 8px;
+    width: 100vw;
+    height: 100vh;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     background-color: #fff;
 }
@@ -27,7 +25,7 @@ h1 {
 }
 
 .node circle {
-    stroke: #fff;
+    stroke: #aa5a;
     stroke-width: 2px;
 }
 
@@ -47,13 +45,13 @@ h1 {
     cursor: pointer;
 }
 
-.tooltip {
+#tooltip {
     position: absolute;
     text-align: left;
     padding: 10px;
     font: 12px sans-serif;
     background: #222;
-    color: #fff;
+    color: white;
     border: 0px;
     border-radius: 8px;
     pointer-events: none;
@@ -67,6 +65,7 @@ h1 {
     stroke: #666;
     stroke-width: 1px;
     stroke-linejoin: round;
+
 }
 
 .legend-title {
