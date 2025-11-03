@@ -196,14 +196,6 @@ class GraphVisualizer {
         const parsed = JSON.parse(event.data) as WebSocketMessage | any;
         switch (parsed.type) {
           case "initialState":
-            this.state.setFullData(parsed.payload as GraphData)
-            this.calculateLayout(this.state.getFullData());
-            this.setupStateMachineCheckbox(
-              this.state.getFullData().nodes.filter(n => n.group === "instance")
-            );
-            this.renderer.serviceCheckboxListGroup.style("display", "none");
-            this.updateGraph();
-            break;
           case "statusUpdate":
             this.state.setFullData(parsed.payload as GraphData);
             this.calculateLayout(this.state.getFullData());

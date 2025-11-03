@@ -138,7 +138,7 @@ class Runtime(
     invocationListeners.add(listener)
   }
 
-  /** Fire an event to all registered listeners. This will be called by ActionInvokeCommand. */
+  /** Fire an event to all registered listeners. */
   fun fireServiceInvoked(sm: StateMachine, serviceType: String) {
     invocationListeners.forEach { it.onServiceInvoked(sm, serviceType) }
   }
