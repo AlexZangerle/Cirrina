@@ -3,8 +3,8 @@ import type {Node as GraphNode, Link as GraphLink, GraphData} from "./types.ts";
 
 /** Encapsulate all graph layout logic. */
 export class GraphLayoutEngine {
-  private width: number;
-  private height: number;
+  private readonly width: number;
+  private readonly height: number;
 
   // Layout Parameters
   private readonly LAYOUT_PARAMS = {

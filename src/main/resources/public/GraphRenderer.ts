@@ -381,7 +381,7 @@ export class GraphRenderer {
   /** Draw and update the links. */
   public drawLinks(links: GraphLink[], getLinkKey: (d: GraphLink) => string): void {
     this.linkGroup.selectAll<SVGLineElement, GraphLink>("line")
-      .data(links.filter(l => l.type !== "event-link"))
+      .data(links.filter(l => l.type !== "event-link"), getLinkKey)
       .join("line")
       .style("stroke-width", d => d.type === "nested" ? 3 : d.type === "invokes" ? 0 : 1.5)
       .style("stroke", d => d.type === "nested" ? "purple" : d.type === "contains" ? "#414743" : "#999")
@@ -500,13 +500,6 @@ export class GraphRenderer {
           .duration(duration)
           .style("opacity", visibleIds.has(d.id) ? 1 : 0.15);
       });
-  }
-
-  /** Show and filter the service checkboxes. */
-  public showServiceCheckboxes(visibleServiceIds: Set<string>): void {
-    this.serviceCheckboxListGroup.style("display", null);
-    this.serviceCheckboxListGroup.selectAll<SVGGElement, GraphNode>("g.checkbox-item")
-      .style("display", (d) => visibleServiceIds.has(d.id) ? null : "none");
   }
 
   /** Attach click handlers to the hull rectangles. */
