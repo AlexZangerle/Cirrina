@@ -5,6 +5,7 @@ import at.ac.uibk.dps.cirrina.csm.Csml.StateDescription;
 import at.ac.uibk.dps.cirrina.execution.object.action.Action;
 import at.ac.uibk.dps.cirrina.execution.object.action.ActionBuilder;
 import at.ac.uibk.dps.cirrina.execution.object.action.TimeoutAction;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
@@ -98,6 +99,8 @@ public abstract class StateClassBuilder {
           parentStateMachineId,
           stateDescription.getName(),
           stateDescription.getLocalContext(),
+          stateDescription.getPersistentContext(),
+          stateDescription.getStaticContext(),
           stateDescription.isInitial(),
           stateDescription.isTerminal(),
           entryActions,

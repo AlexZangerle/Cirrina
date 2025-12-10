@@ -22,6 +22,8 @@ import at.ac.uibk.dps.cirrina.utils.Id;
 import at.ac.uibk.dps.cirrina.utils.Time;
 import com.google.common.flogger.FluentLogger;
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.Tracer;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -89,9 +91,9 @@ public final class StateMachine implements Runnable, EventListener, Scope {
   private final Gauges gauges;
 
   private final Counters counters;
-
+  private final Tracer tracer;
+  private final OpenTelemetry openTelemetry;
   private State activeState;
-
   private List<Id> nestedStateMachineIds = new ArrayList<>();
 
   /**
@@ -122,6 +124,7 @@ public final class StateMachine implements Runnable, EventListener, Scope {
     this.stateMachineClass = stateMachineClass;
     this.serviceImplementationSelector = serviceImplementationSelector;
     this.parentStateMachine = parentStateMachine;
+    this.openTelemetry = openTelemetry;
 
     stateMachineEventHandler = new StateMachineEventHandler(this, this.runtime.getEventHandler());
 
@@ -164,6 +167,9 @@ public final class StateMachine implements Runnable, EventListener, Scope {
     counters.addCounter(COUNTER_EVENTS_HANDLED);
     counters.addCounter(COUNTER_INVOCATIONS);
     counters.addCounter(COUNTER_STATE_MACHINE_INSTANCES);
+
+    // Create tracer
+    this.tracer = openTelemetry.getTracer("at.ac.uibk.dps.cirrina.statemachine");
   }
 
   /**
@@ -178,7 +184,6 @@ public final class StateMachine implements Runnable, EventListener, Scope {
     if (isTerminated()) {
       return false;
     }
-
     // Increment events received counter
     counters
       .getCounter(COUNTER_EVENTS_RECEIVED)
@@ -246,6 +251,7 @@ public final class StateMachine implements Runnable, EventListener, Scope {
         serviceImplementationSelector, // Service implementation selector
         stateMachineEventHandler, // Event handler
         this, // Event listener
+        this.timeoutActionManager, // Timeout Manager
         gauges, // Gauges
         counters, // Counters
         false // Is while?
@@ -273,9 +279,10 @@ public final class StateMachine implements Runnable, EventListener, Scope {
         serviceImplementationSelector, // Service implementation selector
         stateMachineEventHandler, // Event handler
         this, // Event listener
+        this.timeoutActionManager, // Timeout manager
         gauges, // Gauges
         counters, // Counters
-        false // Is while?
+        isWhile // Is while?
       )
     );
   }
@@ -380,13 +387,6 @@ public final class StateMachine implements Runnable, EventListener, Scope {
       for (final var actionCommand : actionCommands) {
         // Execute and acquire new commands
         final var newCommands = actionCommand.execute();
-
-        // KLUDGE: There may be a nicer solution here, one suggestion would be to move the timeout action manager to the execution context
-        if (actionCommand instanceof ActionTimeoutResetCommand) {
-          stopTimeoutAction(
-            ((ActionTimeoutResetCommand) actionCommand).getTimeoutResetAction().getAction()
-          );
-        }
 
         // Execute any subsequent command
         execute(newCommands);
@@ -523,10 +523,15 @@ public final class StateMachine implements Runnable, EventListener, Scope {
     if (transition.isElse()) {
       return;
     }
-
+    CommandFactory commandFactory;
+    if (transition.isInternalTransition()){
+      commandFactory = stateScopedCommandFactory(activeState, raisingEvent, false);
+    } else {
+      commandFactory = stateMachineScopedCommandFactory(this, raisingEvent);
+    }
     // Gather action commands
     final var transitionActionCommands = transition.getActionCommands(
-      stateMachineScopedCommandFactory(this, raisingEvent)
+      commandFactory
     );
 
     // Execute in order
@@ -547,12 +552,14 @@ public final class StateMachine implements Runnable, EventListener, Scope {
    * @param enteringState StateClass instance that is being entered.
    * @param raisingEvent  The raising event or null.
    * @throws UnsupportedOperationException If the entry/while actions could not be executed.
-   * @throws UnsupportedOperationException If the timeout actions could not be started.
+   * @throws UnsupportedOperationException If the timeout actions could not be started.c
    * @throws UnsupportedOperationException If the states could not be switched.
    * @throws UnsupportedOperationException If an always transition could not be selected.
    */
   private Optional<Transition> doEnter(State enteringState, @Nullable Event raisingEvent)
     throws UnsupportedOperationException, IllegalArgumentException {
+    enteringState.resetLocalContext();
+
     // Gather action commands
     final var entryActionCommands = enteringState.getEntryActionCommands(
       stateScopedCommandFactory(enteringState, raisingEvent, false)
@@ -673,7 +680,6 @@ public final class StateMachine implements Runnable, EventListener, Scope {
   private Optional<Transition> handleEvent(Event event)
     throws InterruptedException, UnsupportedOperationException {
     logger.atFiner().log("State machine '%s': Handling event '%s'", this, event);
-
     // Increment events received counter
     counters
       .getCounter(COUNTER_EVENTS_HANDLED)
@@ -691,7 +697,7 @@ public final class StateMachine implements Runnable, EventListener, Scope {
       }
 
       // Create a temporary extent that contains the event data
-      final var extent = getExtent().extend(eventDataContext);
+      final var extent = activeState.getExtent().extend(eventDataContext);
 
       final var onTransition = trySelectOnTransition(event, extent);
 
@@ -739,8 +745,10 @@ public final class StateMachine implements Runnable, EventListener, Scope {
 
       // TransitionClass into the initial state
       var nextTransition = doEnter(initialStateInstance, null);
-
       while (!isTerminated()) {
+        var startTime = 0.0;
+        var type = "";
+        Span span = null;
         Event event = null;
 
         // Wait for a next event, if no transition is selected. No transition is selected initially if the initial state has no selectable
@@ -752,6 +760,12 @@ public final class StateMachine implements Runnable, EventListener, Scope {
             }
             event = eventQueue.poll();
           }
+          startTime = Time.timeInMillisecondsSinceEpoch();
+          type = determineEventType(event);
+          span =
+                  tracer.spanBuilder("process_event_" + type)
+                          .setAttribute("event.channel", event.getChannel().toString())
+                          .startSpan();
 
           nextTransition = handleEvent(event);
         }
@@ -761,14 +775,15 @@ public final class StateMachine implements Runnable, EventListener, Scope {
         // event again
         if (nextTransition.isPresent()) {
           handleTransition(nextTransition.get(), event);
-
           nextTransition = Optional.empty();
         }
 
         // Record event handling time
         if (event != null) {
-          final var delta = Time.timeInMillisecondsSinceEpoch() - event.getCreatedTime();
-
+          final var delta = Time.timeInMillisecondsSinceEpoch() - startTime;
+          span.setAttribute("event.type",  type);
+          span.setAttribute("event.processing_time",  delta);
+          span.end();
           gauges
             .getGauge(GAUGE_EVENT_RESPONSE_TIME_EXCLUSIVE)
             .set(delta, gauges.attributesForEvent(event.getChannel().toString()));
@@ -787,6 +802,19 @@ public final class StateMachine implements Runnable, EventListener, Scope {
     counters.getCounter(COUNTER_STATE_MACHINE_INSTANCES).add(-1, counters.attributesForInstances());
   }
 
+
+  private String determineEventType(Event event) {
+    if (event.getData() == null) return "noop";
+
+    for (var variable : event.getData()) {
+      if ("traceId".equals(variable.name())
+              && variable.value() != null
+              && !variable.value().toString().isEmpty()) {
+        return "train";
+      }
+    }
+    return "noop";
+  }
   /**
    * Returns this scope's extent.
    *
@@ -795,8 +823,8 @@ public final class StateMachine implements Runnable, EventListener, Scope {
   @Override
   public Extent getExtent() {
     return Optional.ofNullable(parentStateMachine)
-      .map(parent -> parent.getExtent().extend(localContext))
-      .orElseGet(() -> runtime.getExtent().extend(localContext));
+            .map(parent -> parent.getExtent().extend(localContext))
+            .orElseGet(() -> runtime.getExtent().extend(localContext));
   }
 
   @Override
@@ -812,7 +840,7 @@ public final class StateMachine implements Runnable, EventListener, Scope {
   public Runtime getRuntime() {
     return this.runtime;
   }
-  
+
   @Override
   public String toString() {
     return new ToStringBuilder(this)
@@ -846,6 +874,12 @@ public final class StateMachine implements Runnable, EventListener, Scope {
    */
   public State getActiveState() { return activeState;}
 
+  public StateMachine getParentStateMachine(){
+    return parentStateMachine;
+  }
+
+  public List<Id> getNestedStateMachineIds() { return nestedStateMachineIds; }
+
   /**
    * Sets the collection of nested state machine instance IDs.
    *
@@ -855,9 +889,5 @@ public final class StateMachine implements Runnable, EventListener, Scope {
     this.nestedStateMachineIds = nestedStateMachineIds;
   }
 
-  public StateMachine getParentStateMachine(){
-    return parentStateMachine;
-  }
-
-  public List<Id> getNestedStateMachineIds() { return nestedStateMachineIds; }
+  public OpenTelemetry getOpenTelemetry() {return this.openTelemetry;}
 }

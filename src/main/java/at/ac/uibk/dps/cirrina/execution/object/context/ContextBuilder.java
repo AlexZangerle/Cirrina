@@ -3,6 +3,7 @@ package at.ac.uibk.dps.cirrina.execution.object.context;
 import at.ac.uibk.dps.cirrina.csm.Csml.ContextDescription;
 import at.ac.uibk.dps.cirrina.execution.object.expression.ExpressionBuilder;
 import jakarta.annotation.Nullable;
+
 import java.io.IOException;
 
 /**
@@ -47,6 +48,23 @@ public class ContextBuilder {
    */
   public static ContextBuilder from(ContextDescription contextDescription) {
     return new ContextBuilder(contextDescription);
+  }
+
+  /**
+   * Reset the context to default values
+   *
+   * @param contextToReset Context which should be reset
+   * @param contextDescription ContextDescription holding the default values
+   * @throws IOException
+   */
+  public static void resetContextToDefault(
+          Context contextToReset,
+          ContextDescription contextDescription
+  ) throws IOException {
+    contextToReset.deleteAll();
+    ContextBuilder contextBuilder = new ContextBuilder(contextDescription);
+    contextBuilder.context = contextToReset;
+    contextBuilder.build();
   }
 
   /**

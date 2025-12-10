@@ -7,6 +7,7 @@ import at.ac.uibk.dps.cirrina.execution.object.action.ActionGraphBuilder;
 import at.ac.uibk.dps.cirrina.io.plantuml.Exportable;
 import at.ac.uibk.dps.cirrina.io.plantuml.PlantUmlVisitor;
 import jakarta.annotation.Nullable;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +35,16 @@ public final class StateClass implements Exportable {
    * Local context description, can be null in case the state has no declared local context.
    */
   private final @Nullable ContextDescription localContextDescription;
+
+  /**
+   * Persistent context description, can be null in case the state has no declared persistent context.
+   */
+  private final @Nullable ContextDescription persistentContextDescription;
+
+  /**
+   * Static context description, can be null in case the state has no declared static context.
+   */
+  private final @Nullable ContextDescription staticContextDescription;
 
   /**
    * Flag that indicates whether this state is initial.
@@ -76,6 +87,8 @@ public final class StateClass implements Exportable {
     this.name = baseParameters.name;
 
     this.localContextDescription = baseParameters.localContextClass;
+    this.persistentContextDescription = baseParameters.persistentContextClass;
+    this.staticContextDescription = baseParameters.staticContextClass;
 
     this.initial = baseParameters.initial;
     this.terminal = baseParameters.terminal;
@@ -99,6 +112,8 @@ public final class StateClass implements Exportable {
     this.name = baseState.name;
 
     this.localContextDescription = baseState.localContextDescription;
+    this.persistentContextDescription = baseState.persistentContextDescription;
+    this.staticContextDescription = baseState.staticContextDescription;
 
     this.initial = childParameters.initial || baseState.initial;
     this.terminal = childParameters.terminal || baseState.terminal;
@@ -187,6 +202,24 @@ public final class StateClass implements Exportable {
   }
 
   /**
+   * Returns the persistent context description.
+   *
+   * @return Persistent context description.
+   */
+  public Optional<ContextDescription> getPersistentContextDescription() {
+    return Optional.ofNullable(persistentContextDescription);
+  }
+
+  /**
+   * Returns the static context description.
+   *
+   * @return Static context description.
+   */
+  public Optional<ContextDescription> getStaticContextDescription() {
+    return Optional.ofNullable(staticContextDescription);
+  }
+
+  /**
    * Returns the entry action graph.
    *
    * @return Entry action graph.
@@ -239,20 +272,24 @@ public final class StateClass implements Exportable {
   /**
    * Base state parameters.
    *
-   * @param parentStateMachineId ID of the parent state machine class.
-   * @param name                 Name of the state.
-   * @param localContextClass    Local context class.
-   * @param initial              Is initial.
-   * @param terminal             Is terminal.
-   * @param entryActions         Entry actions.
-   * @param exitActions          Exit actions.
-   * @param whileActions         While actions.
-   * @param afterActions         After actions.
+   * @param parentStateMachineId      ID of the parent state machine class.
+   * @param name                      Name of the state.
+   * @param localContextClass         Local context class.
+   * @param persistentContextClass    Persistent context class.
+   * @param staticContextClass        Static context class.
+   * @param initial                   Is initial.
+   * @param terminal                  Is terminal.
+   * @param entryActions              Entry actions.
+   * @param exitActions               Exit actions.
+   * @param whileActions              While actions.
+   * @param afterActions              After actions.
    */
   record BaseParameters(
     UUID parentStateMachineId,
     String name,
     @Nullable ContextDescription localContextClass,
+    @Nullable ContextDescription persistentContextClass,
+    @Nullable ContextDescription staticContextClass,
     boolean initial,
     boolean terminal,
     List<Action> entryActions,

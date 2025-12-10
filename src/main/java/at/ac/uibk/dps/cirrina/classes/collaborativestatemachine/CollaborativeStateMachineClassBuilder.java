@@ -9,6 +9,7 @@ import at.ac.uibk.dps.cirrina.execution.object.context.ContextBuilder;
 import at.ac.uibk.dps.cirrina.execution.object.event.Event;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -171,6 +172,12 @@ public final class CollaborativeStateMachineClassBuilder {
       persistentContext = ContextBuilder.from(csml.getPersistentContext())
         .inMemoryContext(true)
         .build();
+
+      csml.getStateMachines().forEach(sm -> {
+        transferVariables(sm.getPersistentContext(), persistentContext);
+        sm.getStates().forEach(state -> transferVariables(state.getPersistentContext(), persistentContext));
+      });
+
     } catch (IOException ignored) {
       throw new IllegalStateException();
     }
@@ -188,5 +195,26 @@ public final class CollaborativeStateMachineClassBuilder {
     } catch (IOException ignored) {
       throw new IllegalStateException();
     }
+  }
+
+  /**
+   * Transfers variables from source context to persistent context
+   *
+   * @param sourceContext Given source context
+   * @param persistentContext Given persistent context
+   */
+  private void transferVariables(
+          Csml.ContextDescription sourceContext,
+          Context persistentContext
+  ) {
+    if (sourceContext == null) return;
+
+    sourceContext.getVariables().forEach(variable -> {
+      try {
+        persistentContext.create(variable.getName(), variable.getValue());
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to create persistent variable: " + variable.getName(), e);
+      }
+    });
   }
 }

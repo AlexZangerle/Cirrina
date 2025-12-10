@@ -5,6 +5,7 @@ import at.ac.uibk.dps.cirrina.classes.transition.TransitionClassBuilder;
 import at.ac.uibk.dps.cirrina.csm.Csml.StateDescription;
 import at.ac.uibk.dps.cirrina.csm.Csml.StateMachineDescription;
 import at.ac.uibk.dps.cirrina.csm.Csml.TransitionDescription;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -65,6 +66,7 @@ public final class StateMachineClassBuilder {
     var parameters = new StateMachineClass.Parameters(
       stateMachineDescription.getName(),
       stateMachineDescription.getLocalContext(),
+      stateMachineDescription.getPersistentContext(),
       nestedStateMachines
     );
 

@@ -48,6 +48,11 @@ public final class StateMachineClass
   private final @Nullable ContextDescription localContextClass;
 
   /**
+   * The persistent context class, can be null in case no persistent context has been declared.
+   */
+  private final @Nullable ContextDescription persistentContextClass;
+
+  /**
    * Initializes this state machine class instance.
    *
    * @param parameters Parameters.
@@ -56,6 +61,7 @@ public final class StateMachineClass
     super(TransitionClass.class);
     this.name = parameters.name;
     this.localContextClass = parameters.localContextClass;
+    this.persistentContextClass = parameters.persistentContextClass;
     this.nestedStateMachineClasses = Collections.unmodifiableList(
       parameters.nestedStateMachineClasses
     );
@@ -186,6 +192,27 @@ public final class StateMachineClass
   }
 
   /**
+   * Returns the persistent context class or empty.
+   *
+   * @return Persistent context class or empty.
+   */
+  public Optional<ContextDescription> getPersistentContext() {
+    return Optional.ofNullable(persistentContextClass);
+  }
+
+  /**
+   * Returns all static context descriptions from all states in this state machine.
+   *
+   * @return List of static context descriptions.
+   */
+  public List<ContextDescription> getAllStaticContexts() {
+    return vertexSet()
+            .stream()
+            .flatMap(stateClass -> stateClass.getStaticContextDescription().stream())
+            .toList();
+  }
+
+  /**
    * Returns the initial state of this state machine.
    *
    * @return Initial state.
@@ -235,6 +262,7 @@ public final class StateMachineClass
   record Parameters(
     String name,
     @Nullable ContextDescription localContextClass,
+    @Nullable ContextDescription persistentContextClass,
     List<StateMachineClass> nestedStateMachineClasses
   ) {}
 }
