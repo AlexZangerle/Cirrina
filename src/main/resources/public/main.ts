@@ -219,7 +219,8 @@ class GraphVisualizer {
     socket.addEventListener("close", (event) => {
       console.log("WebSocket connection closed. Attempting to reconnect in 2 seconds.");
       window.setTimeout(() => {
-        window.location.reload();
+        console.log("Reconnecting socket...");
+        this.socket = this.initSocket();
       }, 2000);
     });
 
