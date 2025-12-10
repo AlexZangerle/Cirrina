@@ -2,6 +2,7 @@ package at.ac.uibk.dps.cirrina.execution.object.context;
 
 import at.ac.uibk.dps.cirrina.execution.object.expression.ExpressionBuilder;
 import jakarta.annotation.Nullable;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -47,6 +48,23 @@ public class ContextBuilder {
    */
   public static ContextBuilder from(Map<String, String> contextDescription) {
     return new ContextBuilder(contextDescription);
+  }
+
+  /**
+   * Reset the context to default values
+   *
+   * @param contextToReset Context which should be reset
+   * @param contextDescription ContextDescription holding the default values
+   * @throws IOException
+   */
+  public static void resetContextToDefault(
+          Context contextToReset,
+          ContextDescription contextDescription
+  ) throws IOException {
+    contextToReset.deleteAll();
+    ContextBuilder contextBuilder = new ContextBuilder(contextDescription);
+    contextBuilder.context = contextToReset;
+    contextBuilder.build();
   }
 
   /**
