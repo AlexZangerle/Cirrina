@@ -1,6 +1,8 @@
 package at.ac.uibk.dps.cirrina.execution.object.expression;
 
-import java.util.Random;
+import com.google.common.base.CharMatcher;
+
+import java.util.*;
 
 public final class Utility {
 
@@ -12,4 +14,75 @@ public final class Utility {
 
     return new byte[selectedSize];
   }
+
+  public static <T extends Number> String appendToMap(
+          String map,
+          String key,
+          T value) {
+
+    Map<String, List<String>> newMap = (Objects.equals(map, "{:}")) ? new HashMap<>() : convertStringToMap(map);
+    newMap.computeIfAbsent(key, k -> new ArrayList<>());
+    List<String> newList = newMap.get(key);
+    newList.add(value.toString());
+    newMap.put(key, newList);
+    return convertMapToString(newMap);
+  }
+  public static <T extends Number> String replaceInMap(String map, String key, T value){
+    Map<String, List<String>> newMap = (Objects.equals(map, "{:}")) ? new HashMap<>() : convertStringToMap(map);
+    newMap.computeIfAbsent(key, k -> new ArrayList<>());
+    newMap.put(key, List.of(value.toString()));
+    return convertMapToString(newMap);
+  }
+
+  public static Map<String, List<String>> convertStringToMap(String data) {
+    Map<String, List<String>> map = new HashMap<>();
+
+    data = data.trim();
+    if (data.startsWith("{") && data.endsWith("}")) {
+      data = data.substring(1, data.length() - 1);
+    }
+    if (data.isEmpty()) return map;
+
+    int bracketLevel = 0;
+    StringBuilder token = new StringBuilder();
+    List<String> pairs = new ArrayList<>();
+
+    for (char c : data.toCharArray()) {
+      if (c == '[') bracketLevel++;
+      if (c == ']') bracketLevel--;
+      if (c == ',' && bracketLevel == 0) {
+        pairs.add(token.toString().trim());
+        token.setLength(0);
+      } else {
+        token.append(c);
+      }
+    }
+    if (!token.isEmpty()) {
+      pairs.add(token.toString().trim());
+    }
+
+    for (String pair : pairs) {
+      String[] keyValue = pair.split("=", 2);
+      if (keyValue.length != 2) continue;
+      String key = CharMatcher.anyOf("[]{} ").removeFrom(keyValue[0]);
+      String value = CharMatcher.anyOf("[]{} ").removeFrom(keyValue[1]);
+      map.put(key, new ArrayList<>(Collections.singletonList(value)));
+    }
+
+    return map;
+  }
+
+  public static String convertMapToString(Map<String, ?> map) {
+    StringBuilder mapAsString = new StringBuilder("{");
+    for (String key : map.keySet()) {
+      mapAsString.append(key + "=" + map.get(key) + ", ");
+    }
+    mapAsString.delete(mapAsString.length()-2, mapAsString.length()).append("}");
+    return mapAsString.toString();
+  }
+
+  public static long now() {
+    return System.currentTimeMillis() / 1000L;
+  }
+
 }
