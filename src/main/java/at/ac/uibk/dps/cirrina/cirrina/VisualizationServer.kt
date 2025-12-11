@@ -120,7 +120,8 @@ class VisualizationServer(private val runtime: Runtime) : InvocationListener {
             "isTerminal" to state.isTerminal,
           )
         if (isActive && sm.extent != null) {
-          nodeData["context"] = sm.extent.all.associate { it.name() to it.value().toString() }
+          nodeData["context"] =
+            currentState.extent.all.associate { it.name() to it.value().toString() }
         }
         // Add State Node
         nodes.add(nodeData)
