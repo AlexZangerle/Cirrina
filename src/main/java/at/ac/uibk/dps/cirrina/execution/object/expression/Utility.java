@@ -85,4 +85,23 @@ public final class Utility {
     return System.currentTimeMillis() / 1000L;
   }
 
+  public static <T extends Number> Boolean notIn(ArrayList<Number> list, T valueOne, T valueTwo) {
+    return !(list.contains(valueOne) || list.contains(valueTwo));
+  }
+
+  public static <T extends Number> Boolean in(ArrayList<Number> list, T valueOne, T valueTwo) {
+    return (list.contains(valueOne) && list.contains(valueTwo));
+  }
+
+  public static <T extends Number> ArrayList<Number> addToList(ArrayList<Number> list, T valueOne, T valueTwo) {
+    list.add(valueOne);
+    list.add(valueTwo);
+    return list;
+  }
+
+  public static <T extends Number> ArrayList<Number> removeFromList(ArrayList<Number> list, T valueOne, T valueTwo) {
+    list.remove(valueOne);
+    list.remove(valueTwo);
+    return list;
+  }
 }
