@@ -15,10 +15,7 @@ public final class Utility {
     return new byte[selectedSize];
   }
 
-  public static <T extends Number> String appendToMap(
-          String map,
-          String key,
-          T value) {
+  public static <T extends Number> String appendToMap(String map, String key, T value) {
 
     Map<String, List<String>> newMap = (Objects.equals(map, "{:}")) ? new HashMap<>() : convertStringToMap(map);
     newMap.computeIfAbsent(key, k -> new ArrayList<>());
@@ -85,4 +82,46 @@ public final class Utility {
     return System.currentTimeMillis() / 1000L;
   }
 
+  public static <T extends Number> ArrayList<Number> addToList(ArrayList<Number> list, T valueOne, T valueTwo) {
+    list.add(valueOne);
+    list.add(valueTwo);
+
+    return list;
+  }
+
+  public static <T extends Number> ArrayList<Number> removeFromList(ArrayList<Number> list, T valueOne, T valueTwo) {
+    list.remove(valueOne);
+    list.remove(valueTwo);
+
+    return list;
+  }
+
+  public static int busyWait(int duration) throws InterruptedException {
+    int test = 0;
+
+    for (int k = 0; k < duration; k++) {
+      Math.random();
+      test++;
+    }
+
+    return test;
+  }
+
+  public static <T> ArrayList<T> addToList(ArrayList<T> list, T value) {
+    list.add(value);
+
+    return list;
+  }
+
+  public static <T> ArrayList<T> removeFirst(ArrayList<T> list) {
+    list.removeFirst();
+
+    return list;
+  }
+
+  public static <T> T takeRandom(ArrayList<T> list) {
+    Collections.shuffle(list);
+
+    return list.getFirst();
+  }
 }
